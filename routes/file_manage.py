@@ -8,7 +8,7 @@ from io import BytesIO
 
 router = APIRouter()
 
-@router.post("/uploadfile/", status_code=201)
+@router.post("/uploadfile", status_code=201)
 async def create_upload_file(file: UploadFile, current_user: Annotated[User, Depends(get_current_user)]):
     mime_types = ["application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
