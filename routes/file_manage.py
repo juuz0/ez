@@ -32,3 +32,18 @@ async def add_file_to_db(file: UploadFile) -> bool:
         return True
     finally:
         session.close()
+
+@router.get("/files", status_code=201)
+async def files(current_user: Annotated[User, Depends(get_current_user)]):
+    session = db.SessionLocal()
+    items: list = []
+    try:
+        file_list: list[models.FileModal] = session.query(models.FileModal).all()
+        for file in file_list:
+            items.append({
+                "name": file.filename,
+                "download_link": "/download-file/" + str(file.id)
+            })
+    finally:
+        session.close()
+    return items
