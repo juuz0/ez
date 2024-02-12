@@ -11,7 +11,7 @@ async def create_upload_file(file: UploadFile, current_user: Annotated[User, Dep
     mime_types = ["application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                   "application/vnd.openxmlformats-officedocument.presentationml.presentation"]
-    if (current_user.role == Role.OPS.name):
+    if (current_user.role != Role.OPS.value):
         raise HTTPException(401, detail="only OPS user can upload files")
     if (file.content_type not in mime_types):
         raise HTTPException(401, detail="file type is not allowed")
@@ -37,6 +37,8 @@ async def add_file_to_db(file: UploadFile) -> bool:
 async def files(current_user: Annotated[User, Depends(get_current_user)]):
     session = db.SessionLocal()
     items: list = []
+    if (current_user.role != Role.CLIENT.value):
+        raise HTTPException(401, detail="only CLIENT user is authorized to access this resource.")
     try:
         file_list: list[models.FileModal] = session.query(models.FileModal).all()
         for file in file_list:
