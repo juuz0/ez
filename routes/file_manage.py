@@ -1,8 +1,10 @@
 from db import models, db
-from fastapi import FastAPI, UploadFile, HTTPException, APIRouter, Depends
+from fastapi import FastAPI, Response, UploadFile, HTTPException, APIRouter, Depends
+from fastapi.responses import FileResponse
 from .user_manage import get_current_user
 from typing import Annotated
 from schema.schema import User, Role
+from io import BytesIO
 
 router = APIRouter()
 
@@ -49,3 +51,22 @@ async def files(current_user: Annotated[User, Depends(get_current_user)]):
     finally:
         session.close()
     return items
+
+@router.get("/download-file/{file_id}")
+async def download_file(file_id: int, current_user: Annotated[User, Depends(get_current_user)]):
+    if (current_user.role != Role.CLIENT.value):
+        raise HTTPException(401, detail="only CLIENT user is authorized to access this resource.")
+    
+    session = db.SessionLocal()
+    try:
+        file_record = session.query(models.FileModal).filter(models.FileModal.id == file_id).first()
+        if file_record:
+            file_contents = file_record.contents
+            file_obj = BytesIO(file_contents)
+            with open(file_record.filename, 'wb') as temp_file:
+                temp_file.write(file_contents)
+            return FileResponse(file_record.filename)
+        else:
+            return {"message": "No file found"}
+    finally:
+        session.close()
